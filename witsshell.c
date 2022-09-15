@@ -4,12 +4,21 @@
 #include <string.h>
 #include <sys/wait.h>
 #include <dirent.h>
+#include <unistd.h>
+#include <limits.h>
 
 int batchmode = 0;
 void int_mode(){
                                                             //interactive mode
-    char *buffer;                                           //simple array pointer                             //size of string
-    ssize_t read;                                           //idk why this but cool
+    char *buffer;                                           //simple array pointer                             
+    ssize_t read;
+    char b[1024];
+    // char n[1024]; 
+    char *gdir;
+    char *dir;
+    char *to; 
+    int s;
+    int rc;                                        
 
     /*while no exit or CTRL_D*/
     do{
@@ -44,9 +53,9 @@ void int_mode(){
 
         char *first[1];
         first[0] = arg[0];
-        // printf("%s\n",first[0]);
+        char * bin;
         if(!strcmp(first[0],"echo\n") || !strcmp(first[0],"echo")){
-            
+            bin = "/bin/echo";
             int s;
             int rc = fork();
             if(rc==0){
@@ -58,7 +67,7 @@ void int_mode(){
         }
 
         else if(!strcmp(first[0],"ls\n") || !strcmp(first[0],"ls")){
-            
+            bin = "/bin/ls";
             int s;
             int rc = fork();
             if(rc==0){
@@ -68,34 +77,42 @@ void int_mode(){
                 wait(&s);
             }     
         }
-        //now we execute the arg
-        // int rc = fork();
-        // if(rc < 0){
-        //     //some problems
-        //     fprintf(stderr,"fork failed\n");
-        //     exit(1);
-        // } 
-        // else if(rc == 0){
-        //     //child
-        //     // printf("%d+%s ",pos,arg[0]);
-        //     if(!strcmp(arg[0],"echo")){
-        //         execv("/bin/echo",arg);
-        //     }
-        //     else if(!strcmp(arg[0],"ls")){ 
-        //         // char* arr[] = {"ls",NULL};
-        //         printf("%s ",arg[0]);
-        //         // execv("/bin/ls",arg);
-        //         exit(0);
-        //     }
-        //     else{
-        //         printf("%s+",arg[0]);
-        //     }
+
+        else if(!strcmp(first[0],"exit\n") || !strcmp(first[0],"exit")){
+            exit(0);  
+        }
+
+        else if(!strcmp(first[0],"cd")){
+
+            int s;
+            int rc = fork();
+            if(rc==0){
+                /*gdir =*/ getcwd(b,sizeof(b));
+                // dir = strcat(gdir,"/");
+                // to = strcat(dir,arg[pos-1]);
+                // printf("%s",gdir);
+                to = "check";
+                chdir(to);
+                getcwd(b,sizeof(b));
+                printf("changed to: %s\n",b);
+                // exit(0);
+            }
+            else{
+                wait(&s);
+                // exit(1);
+            }     
+            
+        }
+        // printf("%s\n",bin);
+        // rc = fork();
+        // if(rc==0){
+        //     execv(bin,arg);            
         // }
         // else{
-        //     //parent
-        //     int wc = wait(NULL);
-        // }
-        
+        //     wait(&s);
+        // } 
+        //free(buffer);
+        //free(arg);  
     }
     while(strcmp(buffer,"exit\n") &&!feof(stdin));
 }
