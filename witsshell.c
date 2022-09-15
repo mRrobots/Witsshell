@@ -87,11 +87,10 @@ void int_mode(){
             int s;
             int rc = fork();
             if(rc==0){
-                /*gdir =*/ getcwd(b,sizeof(b));
-                // dir = strcat(gdir,"/");
-                // to = strcat(dir,arg[pos-1]);
-                // printf("%s",gdir);
-                to = "check";
+                getcwd(b,sizeof(b));
+                char *str1 = arg[pos-1];
+                strtok(str1,"\n");
+                to = str1;
                 chdir(to);
                 getcwd(b,sizeof(b));
                 printf("changed to: %s\n",b);
@@ -99,7 +98,7 @@ void int_mode(){
             }
             else{
                 wait(&s);
-                // exit(1);
+                exit(1);
             }     
             
         }
