@@ -7,6 +7,11 @@
 #include <unistd.h>
 #include <limits.h>
 #include <fcntl.h>
+#include <stdbool.h>
+#include <assert.h>
+#include <sys/types.h>
+#include <sys/stat.h>
+
 
 int batchmode = 0;
 void int_mode(){
@@ -122,20 +127,20 @@ void int_mode(){
                 if( fd ==0){
                     if(redirection){
                         //write to a file
+                        mode_t mode= S_IRWXU; //mode to read and write and execute
+                        int fdr = open("mosis.txt",O_WRONLY|O_CREAT|O_TRUNC,mode);
                         int rc = fork();
-                        int fd = open("mosis.txt",O_RDWR|O_CREAT|O_APPEND,777);
+                        
                         if(rc==0){
-                            //child
-                            close(STDIN_FILENO);
-                            dup2(fd,1);
-                            printf("write something");
-                            close(fd);
+                            dup2(fdr,1);
+                            dup2(fdr,2);
+                            close(fdr);
                             execv(dest,arg);
                         }
                         else{
                             wait(&s);
-                            close(fd);
                         }
+                        close(fdr);
                     }
                     else{
                         int rc = fork();
@@ -146,17 +151,12 @@ void int_mode(){
                             wait(&s);
                         }     
                     }
-                    
                 }
                 else{
-                    // printf("nahh\n");
                     //its an error
                 }
             }
-        }
-
-        // pos = 0;
-        // free(arg);        
+        }     
     }
     while(strcmp(buffer,"exit\n") &&!feof(stdin));
 }
