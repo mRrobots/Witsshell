@@ -19,25 +19,18 @@ void int_mode(){
     char *buffer;                                           //simple array pointer                             
     ssize_t read;
     char b[1024];
-    // char n[1024]; 
-    char *gdir;
-    char *dir;
     char *to; 
     int s;
-    int rc;
-    char *paths[1024];
-    // char *path[1024];
+    char *paths[1024];                                      //for storing path
     int pathsize = 1;
-    
-                                           
 
     /*while no exit or CTRL_D*/
     do{
-        paths[0] = "/bin/";
+        paths[0] = "/bin/";                                 //start up bin
         size_t buffersize = 32;    
         buffer = (char*)malloc(buffersize*sizeof(char));    //declare
         printf("witsshell> ");                              //prompt
-        read = getline(&buffer,&buffersize,stdin);         //user input
+        read = getline(&buffer,&buffersize,stdin);          //user input
         /*this will help to not change the user input*/
         char *buffbrother = buffer;                         //hey brother
         /*for spacing multiple reads*/
@@ -46,11 +39,14 @@ void int_mode(){
                                      //data structure :/
         int pos = 0;                                        //num of arg
         found = strsep(&buffbrother," "); 
+        strtok(found,"\n");
         /*getting user input from buffer 
          and separating em and storing 
           them to  array DS
         */
-       int redirection = 0; 
+       int redirection = 0;                                 //This is for Redirection
+       int parallelism = 0;                                 //Parallelism
+       int n_com = 1;                                       //number of coms
         while ( found != NULL )
         {
             arg[pos] = found;
@@ -58,6 +54,7 @@ void int_mode(){
             first[0] = arg[pos];
             pos++;
 
+            //if the buffer is already full, put some more(lets say 2x)
             if((int)pos >= (int)buffersize){
                 buffersize+=buffersize;
                 arg = realloc(arg,buffersize*sizeof(char*));
@@ -65,24 +62,29 @@ void int_mode(){
             if(strcmp(first[0],">") == 0){  //check if i have to rerout to the output file
                 redirection = 1; //yep we have to, but becareful
             }
-            // printf("%s+%s\n",found,arg[pos]);
+            if(strcmp(first[0],"&") == 0){  //check if i have to rerout to the output file
+                parallelism = 1; //yep we have to, but becareful
+                n_com++;
+                // printf("we have it parrallelism");
+            }
             found = strsep(&buffbrother," ");
+            strtok(found,"\n");
         }
-
-        arg[pos] = NULL;
+        printf("%d\n",n_com);
+        arg[pos] = NULL; //make last value,for terminating
         
-
-        char *first[1];
+        char *first[1]; //Helper :/
         first[0] = arg[0];
-        char * bin;
 
-        if(!strcmp(first[0],"exit\n") || !strcmp(first[0],"exit")){
+        //Exit command
+        if(!strcmp(first[0],"exit")){
             exit(0);  
         }
 
+        //CD command
         else if(!strcmp(first[0],"cd")){
 
-            int s;
+            // int s; //NULL
             int rc = fork();
             if(rc==0){
                 getcwd(b,sizeof(b));
@@ -95,18 +97,21 @@ void int_mode(){
                 // exit(0);
             }
             else{
-                wait(&s);
+                wait(NULL);
                 exit(1);
             }     
         }
+        //Path eg./bin/mosis/usr
         else if(!strcmp(first[0],"path")){
             pathsize = 1;
+            //inserting paths
             for(int i=1;i<pos;i++){
                 paths[i] = arg[i];
                 pathsize++;
             }
         }
 
+        //Non-Built in Commands
         else{
             for(int i = 0;i<pathsize;i++){
                 char dest[128];
@@ -138,7 +143,7 @@ void int_mode(){
                             execv(dest,arg);
                         }
                         else{
-                            wait(&s);
+                            wait(NULL);
                         }
                         close(fdr);
                     }
