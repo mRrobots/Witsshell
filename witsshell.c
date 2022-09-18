@@ -14,67 +14,53 @@
 
 
 int batchmode = 0;
-void int_mode(){
-                                                            //interactive mode
-    char *buffer;                                           //simple array pointer                             
-    ssize_t read;
+size_t buffersize = 32;  
+void command(char* buffer){
     char b[1024];
     char *to; 
     int s;
     char *paths[1024];                                      //for storing path
+    paths[0] = "/bin/";                                 //start up bin
     int pathsize = 1;
+    /*this will help to not change the user input*/
+    char *buffbrother = buffer;                         //hey brother
+    /*for spacing multiple reads*/
+    char *found;                                        
+    char **arg = malloc(buffersize*sizeof(char*));      //data structure :/
+    int pos = 0;                                        //num of arg
+    found = strsep(&buffbrother," "); 
+    strtok(found,"\n");
 
-    /*while no exit or CTRL_D*/
-    do{
-        paths[0] = "/bin/";                                 //start up bin
-        size_t buffersize = 32;    
-        buffer = (char*)malloc(buffersize*sizeof(char));    //declare
-        printf("witsshell> ");                              //prompt
-        read = getline(&buffer,&buffersize,stdin);          //user input
-        /*this will help to not change the user input*/
-        char *buffbrother = buffer;                         //hey brother
-        /*for spacing multiple reads*/
-        char *found;                                        
-        char **arg = malloc(buffersize*sizeof(char*)); 
-                                     //data structure :/
-        int pos = 0;                                        //num of arg
-        found = strsep(&buffbrother," "); 
-        strtok(found,"\n");
-        /*getting user input from buffer 
-         and separating em and storing 
-          them to  array DS
-        */
-       int redirection = 0;                                 //This is for Redirection
-       int parallelism = 0;                                 //Parallelism
-       int n_com = 1;                                       //number of coms
-        while ( found != NULL )
-        {
-            arg[pos] = found;
-            char *first[1];
-            first[0] = arg[pos];
-            pos++;
+    int redirection = 0;                                //This is for Redirection
+    int parallelism = 0;                                //Parallelism
+    int n_com = 1;                                      //number of coms
 
-            //if the buffer is already full, put some more(lets say 2x)
-            if((int)pos >= (int)buffersize){
-                buffersize+=buffersize;
-                arg = realloc(arg,buffersize*sizeof(char*));
-            }
-            if(strcmp(first[0],">") == 0){  //check if i have to rerout to the output file
-                redirection = 1; //yep we have to, but becareful
-            }
-            if(strcmp(first[0],"&") == 0){  //check if i have to rerout to the output file
-                parallelism = 1; //yep we have to, but becareful
-                n_com++;
-                // printf("we have it parrallelism");
-            }
-            found = strsep(&buffbrother," ");
-            strtok(found,"\n");
+    while ( found != NULL )
+    {
+        arg[pos] = found;
+        char *first[1];
+        first[0] = arg[pos];
+        pos++;
+
+        //if the buffer is already full, put some more(lets say 2x)
+        if((int)pos >= (int)buffersize){
+            buffersize+=buffersize;
+            arg = realloc(arg,buffersize*sizeof(char*));
         }
-        printf("%d\n",n_com);
-        arg[pos] = NULL; //make last value,for terminating
-        
-        char *first[1]; //Helper :/
-        first[0] = arg[0];
+        if(strcmp(first[0],">") == 0){  //check if i have to rerout to the output file
+            redirection = 1; //yep we have to, but becareful
+        }
+        if(strcmp(first[0],"&") == 0){  //check if i have to rerout to the output file
+            parallelism = 1; //yep we have to, but becareful
+            n_com++;
+        }
+        found = strsep(&buffbrother," ");
+        strtok(found,"\n");
+    }
+
+     char *first[1]; //Helper array:/
+     first[0] = arg[0];
+
 
         //Exit command
         if(!strcmp(first[0],"exit")){
@@ -83,7 +69,6 @@ void int_mode(){
 
         //CD command
         else if(!strcmp(first[0],"cd")){
-
             // int s; //NULL
             int rc = fork();
             if(rc==0){
@@ -91,9 +76,10 @@ void int_mode(){
                 char *str1 = arg[pos-1];
                 strtok(str1,"\n");
                 to = str1;
-                chdir(to);
-                getcwd(b,sizeof(b));
-                printf("changed to: %s\n",b);
+                int c = chdir(to);
+                if(c==-1){}
+                // getcwd(b,sizeof(b));
+                // printf("changed to: %s\n",b);
                 // exit(0);
             }
             else{
@@ -118,18 +104,16 @@ void int_mode(){
                 char dest2[128];
                 char *path = paths[i];
                 char *a = first[0];
+                //remove the newline,just incase we have it
                 strtok(a,"\n");
-                /*printf("%s\n",path);
-                printf("%s\n",a);*/
+                //concatination of the path and current command
                 strcpy(dest,path);
                 strcpy(dest2,a);
-                /*printf("%s\n",dest);
-                printf("%s\n",a);*/
                 strcat(dest,dest2);
-                // printf("%s\n",dest);
-                // strcat(path,a);
+                //check if the file exists and executable
                 int fd = access(dest,X_OK);
                 if( fd ==0){
+                    //phakaty inside
                     if(redirection){
                         //write to a file
                         mode_t mode= S_IRWXU; //mode to read and write and execute
@@ -137,9 +121,12 @@ void int_mode(){
                         int rc = fork();
                         
                         if(rc==0){
+                            //child process, will let evrything write on file
                             dup2(fdr,1);
+                            // no idea for this
                             dup2(fdr,2);
                             close(fdr);
+                            //execute the command
                             execv(dest,arg);
                         }
                         else{
@@ -148,6 +135,7 @@ void int_mode(){
                         close(fdr);
                     }
                     else{
+                        //nomarl execution
                         int rc = fork();
                         if(rc==0){
                             execv(dest,arg);
@@ -161,39 +149,68 @@ void int_mode(){
                     //its an error
                 }
             }
-        }     
+        }   
+}
+void int_mode(){
+                                                            //interactive mode
+    char *buffer;                                           //simple array pointer                             
+    ssize_t read;
+
+    /*while no exit or CTRL_D*/
+    do{
+          
+        buffer = (char*)malloc(buffersize*sizeof(char));    //declare
+        printf("witsshell> ");                              //prompt
+        read = getline(&buffer,&buffersize,stdin);          //user input
+       
+        /*getting user input from buffer 
+         and separating em and storing 
+          them to  array DS
+        */
+          command(buffer);
     }
-    while(strcmp(buffer,"exit\n") &&!feof(stdin));
+    while(!feof(stdin));
 }
 int main(int argc,char* argv[]){
 
+    //error message for error
     char *file = "/no/such/file";
+
+    //erro to many arguments
     if(argc>2){
         char error[32] = "error";
         exit(1); 
     }
+    // arguments for reading on file(batch mode)
     else if(argc==2){
+        //set a batch mode
         batchmode = 1;
         file =  argv[1];
-        printf("reading file\n");
+        // printf("reading file\n");
     }
 
-    FILE *new;
+    //batch or witsshell, lets found out
+
     FILE *fp;
 
     if(batchmode == 1){
-        printf("read\n");
+        //we are in batch mode
         fp = fopen(file,"r");
-        int c = getc(fp);
-        while (c!=EOF)
+        char line[256];
+        char ch;
+        
+        while (fgets(line ,sizeof(line),fp)/* && (ch = getchar()) != EOF*/ )
         {
-            putchar(c);
-            c = getc(fp);
+            command(line);
         }
-        exit(0);
+        fclose(fp);
     }
+
+  
     else{
+        //witsshell
         int_mode();
     }
+
     return 0;
 }
