@@ -16,6 +16,7 @@
 int batchmode = 0;
 size_t buffersize = 32;  
 void command(char* buffer){
+    char *filename[1];
     char b[1024];
     char *to; 
     int s;
@@ -38,8 +39,6 @@ void command(char* buffer){
     while ( found != NULL )
     {
         arg[pos] = found;
-        char *first[1];
-        first[0] = arg[pos];
         pos++;
 
         //if the buffer is already full, put some more(lets say 2x)
@@ -47,109 +46,114 @@ void command(char* buffer){
             buffersize+=buffersize;
             arg = realloc(arg,buffersize*sizeof(char*));
         }
-        if(strcmp(first[0],">") == 0){  //check if i have to rerout to the output file
+        if(strcmp(arg[pos-1],">") == 0){  //check if i have to rerout to the output file
             redirection = 1; //yep we have to, but becareful
+            pos--;//cannot put  > in  out command
         }
-        if(strcmp(first[0],"&") == 0){  //check if i have to rerout to the output file
+        if(strcmp(arg[pos-1],"&") == 0){  //check if i have to rerout to the output file
             parallelism = 1; //yep we have to, but becareful
             n_com++;
+            pos--;//cannot put & in  out comman
         }
         found = strsep(&buffbrother," ");
         strtok(found,"\n");
+        if(redirection){
+            //get the file name
+            filename[0] = arg[pos-1];
+        }
+    }
+    // printf("%s",filename[0]);
+    char *first[1]; //Helper array:/
+    first[0] = arg[0];
+    //Exit command
+    if(!strcmp(first[0],"exit")){
+        exit(0);  
     }
 
-     char *first[1]; //Helper array:/
-     first[0] = arg[0];
-
-
-        //Exit command
-        if(!strcmp(first[0],"exit")){
-            exit(0);  
-        }
-
         //CD command
-        else if(!strcmp(first[0],"cd")){
-            // int s; //NULL
-            int rc = fork();
-            if(rc==0){
-                getcwd(b,sizeof(b));
-                char *str1 = arg[pos-1];
-                strtok(str1,"\n");
-                to = str1;
-                int c = chdir(to);
-                if(c==-1){}
-                // getcwd(b,sizeof(b));
-                // printf("changed to: %s\n",b);
-                // exit(0);
-            }
-            else{
-                wait(NULL);
-                exit(1);
-            }     
-        }
-        //Path eg./bin/mosis/usr
-        else if(!strcmp(first[0],"path")){
-            pathsize = 1;
-            //inserting paths
-            for(int i=1;i<pos;i++){
-                paths[i] = arg[i];
-                pathsize++;
+    else if(!strcmp(first[0],"cd")){
+    // int s; //NULL
+        int rc = fork();
+        if(rc==0){
+            getcwd(b,sizeof(b));
+            char *str1 = arg[pos-1];
+            strtok(str1,"\n");
+            to = str1;
+            int c = chdir(to);
+            if(c==-1){
+                //error
             }
         }
-
-        //Non-Built in Commands
         else{
-            for(int i = 0;i<pathsize;i++){
-                char dest[128];
-                char dest2[128];
-                char *path = paths[i];
-                char *a = first[0];
-                //remove the newline,just incase we have it
-                strtok(a,"\n");
-                //concatination of the path and current command
-                strcpy(dest,path);
-                strcpy(dest2,a);
-                strcat(dest,dest2);
-                //check if the file exists and executable
-                int fd = access(dest,X_OK);
-                if( fd ==0){
-                    //phakaty inside
-                    if(redirection){
-                        //write to a file
-                        mode_t mode= S_IRWXU; //mode to read and write and execute
-                        int fdr = open("mosis.txt",O_WRONLY|O_CREAT|O_TRUNC,mode);
-                        int rc = fork();
-                        
-                        if(rc==0){
-                            //child process, will let evrything write on file
-                            dup2(fdr,1);
-                            // no idea for this
-                            dup2(fdr,2);
-                            close(fdr);
-                            //execute the command
-                            execv(dest,arg);
-                        }
-                        else{
-                            wait(NULL);
-                        }
+            wait(NULL);
+            exit(1);
+        }     
+    }
+    //Path eg./bin/mosis/usr
+    else if(!strcmp(first[0],"path")){
+        pathsize = 1;
+        //inserting paths
+        for(int i=1;i<pos;i++){
+            paths[i] = arg[i];
+            pathsize++;
+        }
+    }
+
+    //Non-Built in Commands
+    else{
+        for(int i = 0;i<pathsize;i++){
+            char dest[128];
+            char dest2[128];
+            char *path = paths[i];
+            char *a = first[0];
+            //remove the newline,just incase we have it
+            strtok(a,"\n");
+            //concatination of the path and current command
+            strcpy(dest,path);
+            strcpy(dest2,a);
+            strcat(dest,dest2);
+            //check if the file exists and executable
+            int fd = access(dest,X_OK);
+            if( fd ==0){
+                //phakaty inside
+                if(redirection){
+                    //write to a file
+                    mode_t mode= S_IRWXU; //mode to read and write and execute
+                    int fdr = open(filename[0],O_WRONLY|O_CREAT|O_TRUNC,mode);
+                    int rc = fork();
+                    //child
+                    if(rc==0){
+                        //child process, will let evrything write on file
+                        dup2(fdr,1);
+                        // no idea for this
+                        dup2(fdr,2);
                         close(fdr);
+                        //execute the command
+                        execv(dest,arg);
                     }
+                    //parent 
                     else{
-                        //nomarl execution
-                        int rc = fork();
-                        if(rc==0){
-                            execv(dest,arg);
-                        }
-                        else{
-                            wait(&s);
-                        }     
+                        wait(NULL);
                     }
+                    close(fdr);
                 }
                 else{
-                    //its an error
+                    //nomarl execution
+                    int rc = fork();
+                    //child
+                      if(rc==0){
+                        execv(dest,arg);
+                    }//parent
+                    else{
+                        wait(&s);
+                    }     
                 }
             }
-        }   
+            else{
+                //its an error
+            }
+        }
+    }   
 }
 void int_mode(){
                                                             //interactive mode
@@ -199,18 +203,24 @@ int main(int argc,char* argv[]){
         char line[256];
         char ch;
         
-        while (fgets(line ,sizeof(line),fp)/* && (ch = getchar()) != EOF*/ )
-        {
-            command(line);
+
+        do{
+          
+        while (fgets(line ,sizeof(line),fp)/* && (ch = getchar()) != EOF*/ ){
+            command(line);//read line
         }
         fclose(fp);
+       
+        /*getting user input from buffer 
+         and separating em and storing 
+          them to  array DS
+        */
+        }
+        while(!feof(stdin));       
     }
-
-  
     else{
         //witsshell
         int_mode();
     }
-
     return 0;
 }

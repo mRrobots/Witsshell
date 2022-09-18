@@ -1,0 +1,24 @@
+-rwx------  1 vmuser vmuser     0 Sep 18 15:19 out
+
+/tmp:
+total 84
+drwxrwxrwt 19 root   root   12288 Sep 18 15:19 .
+drwxr-xr-x 20 root   root    4096 Feb 12  2021 ..
+-rw-------  1 vmuser vmuser     0 Sep 18 14:34 config-err-Dv2aJ4
+drwxrwxrwt  2 root   root    4096 Sep 18 14:33 .font-unix
+drwxrwxrwt  2 root   root    4096 Sep 18 14:35 .ICE-unix
+drwx------  3 root   root    4096 Sep 18 14:33 snap.lxd
+drwx------  2 vmuser vmuser  4096 Sep 18 14:34 ssh-kmTmon3Egy54
+drwx------  3 root   root    4096 Sep 18 14:33 systemd-private-3d1e32938df646a880a7d3cbc34a30fc-apache2.service-w3BIHi
+drwx------  3 root   root    4096 Sep 18 14:34 systemd-private-3d1e32938df646a880a7d3cbc34a30fc-colord.service-AswfRi
+drwx------  3 root   root    4096 Sep 18 14:33 systemd-private-3d1e32938df646a880a7d3cbc34a30fc-ModemManager.service-LTVRwg
+drwx------  3 root   root    4096 Sep 18 14:33 systemd-private-3d1e32938df646a880a7d3cbc34a30fc-switcheroo-control.service-3Bxujh
+drwx------  3 root   root    4096 Sep 18 14:33 systemd-private-3d1e32938df646a880a7d3cbc34a30fc-systemd-logind.service-4riTAf
+drwx------  3 root   root    4096 Sep 18 14:33 systemd-private-3d1e32938df646a880a7d3cbc34a30fc-systemd-resolved.service-2IjDaj
+drwx------  3 root   root    4096 Sep 18 14:33 systemd-private-3d1e32938df646a880a7d3cbc34a30fc-systemd-timesyncd.service-VBThXi
+drwx------  3 root   root    4096 Sep 18 14:34 systemd-private-3d1e32938df646a880a7d3cbc34a30fc-upower.service-sxtNoh
+drwxrwxrwt  2 root   root    4096 Sep 18 14:33 .Test-unix
+drwx------  2 vmuser vmuser  4096 Sep 18 14:34 tracker-extract-files.1001
+drwx------  2 gdm    gdm     4096 Sep 18 14:34 tracker-extract-files.128
+drwxrwxrwt  2 root   root    4096 Sep 18 14:34 .X11-unix
+drwxrwxrwt  2 root   root    4096 Sep 18 14:33 .XIM-unix
