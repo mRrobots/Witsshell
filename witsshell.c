@@ -14,7 +14,10 @@
 
 
 int batchmode = 0;
+int builtinony = 0;
 size_t buffersize = 32;  
+char *paths[1024];          //for storing path
+int pathsize;               //path size
 void command(char* buffer){
 
     char *com;
@@ -30,7 +33,8 @@ void command(char* buffer){
     }
 
     for(int k=0;k<size;k++){
-    
+
+        int r = 0;
         char *scared = array[k];
         char *filename[1];
         char b[1024];
@@ -83,92 +87,128 @@ void command(char* buffer){
         printf("%d\n",pos);
         // printf("%s\n",arg[pos-1]);
         
-    //     //Exit command
+        //Exit command
         if(!strcmp(first[0],"exit")){
-            exit(0);  
+            if(pos>1){
+                char error_message[30] = "An error has occurred\n";
+                write(STDERR_FILENO, error_message, strlen(error_message));
+                return;
+            }
+            if(r){
+                exit(0);
+            }
+            else{
+                exit(0);
+            } 
         }
 
             //CD command
         else if(!strcmp(first[0],"cd")){
-        // int s; //NULL
             int rc = fork();
             if(rc==0){
-                getcwd(b,sizeof(b));
-                char *str1 = arg[pos-1];
-                strtok(str1,"\n");
-                to = str1;
-                int c = chdir(to);
-                if(c==-1){
-                    //error
+                //child process
+                //check argument
+                if(pos!=1){
+                    getcwd(b,sizeof(b));                 //get current d
+                    char *str1 = arg[pos-1];
+                    strtok(str1,"\n");
+                    to = str1;
+                    int c = chdir(to);                   //we are new d,if u provided good stuff
+                    if(c==-1){
+                        //nah,stop playing
+                        char error_message[30] = "An error has occurred\n";
+                        write(STDERR_FILENO, error_message, strlen(error_message));
+                        r=1;
+                    }
+                }
+                else{
+                //nah,stop playing
+                    char error_message[30] = "An error has occurred\n";
+                    write(STDERR_FILENO, error_message, strlen(error_message));
+                    r=1;
                 }
             }
             else{
+                //parent process for waiting
                 wait(NULL);
                 exit(1);
             }     
         }
         //Path eg./bin/mosis/usr
         else if(!strcmp(first[0],"path")){
-            pathsize = 1;
-            //inserting paths
-            for(int i=1;i<pos;i++){
-                paths[i] = arg[i];
-                pathsize++;
+            pathsize = 0;
+            // printf("%d",pos);
+            if(pos == 1){
+                //empty path
+                builtinony = 1;
+            }
+            else{
+                //cool path insering
+                for(int i=1;i<pos;i++){
+                    paths[i] = arg[i];
+                    pathsize++;
+                    builtinony = 0;
+                }
             }
         }
 
         //Non-Built in Commands
         else{
-            for(int i = 0;i<pathsize;i++){
-                char dest[128];
-                char dest2[128];
-                char *path = paths[i];
-                char *a = first[0];
-                //remove the newline,just incase we have it
-                strtok(a,"\n");
-                //concatination of the path and current command
-                strcpy(dest,path);
-                strcpy(dest2,a);
-                strcat(dest,dest2);
-                //check if the file exists and executable
-                int fd = access(dest,X_OK);
-                if( fd ==0){
-                    //phakaty inside
-                    if(redirection){
-                        //write to a file
-                        mode_t mode= S_IRWXU; //mode to read and write and execute
-                        int fdr = open(filename[0],O_WRONLY|O_CREAT|O_TRUNC,mode);
-                        int rc = fork();
-                        //child
-                        if(rc==0){
-                            //child process, will let evrything write on file
-                            dup2(fdr,1);
-                            // no idea for this
-                            dup2(fdr,2);
+            if(builtinony != 1){
+                // printf("hey");
+            
+                for(int i = 0;i<pathsize;i++){
+                    char dest[128];
+                    char dest2[128];
+                    char *path = paths[i];
+                    char *a = first[0];
+                    //remove the newline,just incase we have it
+                    strtok(a,"\n");
+                    //concatination of the path and current command
+                    strcpy(dest,path);
+                    strcpy(dest2,a);
+                    strcat(dest,dest2);
+                    //check if the file exists and executable
+                    int fd = access(dest,X_OK);
+                    if( fd ==0){
+                        //phakaty inside
+                        if(redirection){
+                            //write to a file
+                            mode_t mode= S_IRWXU; //mode to read and write and execute
+                            int fdr = open(filename[0],O_WRONLY|O_CREAT|O_TRUNC,mode);
+                            int rc = fork();
+                            //child
+                            if(rc==0){
+                                //child process, will let evrything write on file
+                                dup2(fdr,1);
+                                // no idea for this
+                                dup2(fdr,2);
+                                close(fdr);
+                                //execute the command
+                                execv(dest,arg);
+                            }
+                            //parent 
+                            else{
+                                wait(NULL);
+                            }
                             close(fdr);
-                            //execute the command
-                            execv(dest,arg);
                         }
-                        //parent 
                         else{
-                            wait(NULL);
+                            //nomarl execution
+                            int rc = fork();
+                            //child
+                            if(rc==0){
+                                execv(dest,arg);
+                            }//parent
+                            else{
+                                wait(&s);
+                            }     
                         }
-                        close(fdr);
                     }
                     else{
-                        //nomarl execution
-                        int rc = fork();
-                        //child
-                        if(rc==0){
-                            execv(dest,arg);
-                        }//parent
-                        else{
-                            wait(&s);
-                        }     
+                        char error_message[30] = "An error has occurred\n";
+                        write(STDERR_FILENO, error_message, strlen(error_message));
                     }
-                }
-                else{
-                    //its an error
                 }
             }
         }       
@@ -216,23 +256,26 @@ int main(int argc,char* argv[]){
 
     FILE *fp;
 
+    // batch
     if(batchmode == 1){
         //we are in batch mode
         fp = fopen(file,"r");
-        char line[256];
-        char ch;
-           
-        while (fgets(line ,sizeof(line),fp) !=NULL/* && (ch = getchar()) != EOF*/ ){
-            command(line);//read line
+        if(fp){
+            char line[256];
+            char ch;
+    
+            // do{
+
+            while (fgets(line ,sizeof(line),fp) != NULL/* && (ch = getchar()) != EOF*/ ){
+                command(line);//read line
+            }
+            fclose(fp);
+            // }
+             
         }
-        fclose(fp);
-       
-        /*getting user input from buffer 
-         and separating em and storing 
-          them to  array DS
-        */
-        
-        // while(!feof(stdin));       
+         else{
+            printf("/no/such/file\n");    
+        }
     }
     else{
         //witsshell
