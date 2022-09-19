@@ -21,26 +21,16 @@ void command(char* buffer){
     char *array[100];
     char l[100][100];
     int size = 0;
-    // com = strsep(&buffer,"&");
+
     while ((com = strsep(&buffer,"&")) !=NULL)
     {
-        strtok(com," ");
         array[size] = com;
+        strtok(array[size],"\n");
         size++;
-        // com = strsep(&buffer,"&");
     }
 
-    // printf(array[0]);
-    // printf("%d\n",size);
-
-
-    // for(int z=0;z<size;z++){
-    //     printf("%s\n",array[z]);
-    // }
-    int sec = 0;
     for(int k=0;k<size;k++){
-        // printf("%s: %d\n",array[k],k);
-
+    
         char *scared = array[k];
         char *filename[1];
         char b[1024];
@@ -55,22 +45,19 @@ void command(char* buffer){
         char *found;                                        
         char **arg = malloc(buffersize*sizeof(char*));      //data structure :/
         int pos = 0;                                        //num of arg
-        // found = strsep(&buffbrother," "); 
-        // strtok(found,"\n");
-        // printf("%s :",found);
-        // printf("done\n");
+    
         int redirection = 0;                                //This is for Redirection
         int parallelism = 0;                                //Parallelism
         int n_com = 1;                                      //number of coms
 
-        // char *cArray[1024][1024];
-    //     int cN = 0;
-    //     char * newC = malloc(1024);
         while ( (found = strsep(&buffbrother," "))!= NULL )
         {
-            // printf("%s\n",found);
-            strtok(found,"\n");
+            if(strlen(found) == 0){
+                continue;
+            }
+            
             arg[pos] = found;
+            strtok(arg[pos],"\n");
             pos++;
 
             //if the buffer is already full, put some more(lets say 2x)
@@ -82,30 +69,14 @@ void command(char* buffer){
                 redirection = 1; //yep we have to, but becareful
                 pos--;//cannot put  > in  out command
             }
-        //     if(strcmp(arg[pos-1],"&") == 0){  //check if i have to rerout to the output file
-        //         parallelism = 1; //yep we have to, but becareful
-        //         n_com++;
-        //         pos--;//cannot put & in  out comman
-        //     }
-            // found = strsep(&buffbrother," ");
-            // strtok(found,"\n");
+        
             if(redirection){
                 //get the file name
                 filename[0] = arg[pos-1];
             }
         }
-        if(sec!=0){
-            arg = arg+1;
-            pos--;
-        }
-        sec = 1;
-        for(int a=0;a<pos;a++){
-            // printf("from here %d",a);
-            printf("(element:%s;index:%d)",arg[a],a);
-        }
 
-        // printf("%d\n",k);
-    //     // printf("%s",filename[0]);
+        
         char *first[1]; //Helper array:/
         first[0] = arg[0];
 

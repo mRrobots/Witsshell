@@ -13,8 +13,11 @@
 #include <sys/stat.h>
 
 int main(){
-    char arry[10] = "Vusi";
-    char *n = arry+1;
-    printf("%c\n",n[0]);
-    printf("%s",arry);
+    for(int i=0;i<10;i++){
+        if(i==1 || i==5){
+            continue;
+        }
+        printf("%d",i);
+        
+    }
 }
