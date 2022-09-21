@@ -16,7 +16,7 @@
 int batchmode = 0;
 int builtinony = 0;
 size_t buffersize = 32;  
-char *paths[1024];          //for storing path
+char paths[1024];          //for storing path
 int pathsize;               //path size
 void command(char* buffer){
 
@@ -31,6 +31,11 @@ void command(char* buffer){
         strtok(array[size],"\n");
         size++;
     }
+    
+    if(strlen(array[0]) == 0){
+        exit(1);
+    }
+    
 
     for(int k=0;k<size;k++){
 
@@ -84,7 +89,12 @@ void command(char* buffer){
         char *first[1]; //Helper array:/
         first[0] = arg[0];
 
-        printf("%d\n",pos);
+        // for (int i = 0; i < pos; i++)
+        // {
+        //     printf("%s,%d",arg[i],i);
+        // }
+        
+        // printf("%d\n",pos);
         // printf("%s\n",arg[pos-1]);
         
         //Exit command
